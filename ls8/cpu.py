@@ -40,7 +40,7 @@ class CPU:
         """ALU operations."""
 
         if op == "ADD":
-            self.reg[reg_a] += self.reg[reg_b]
+            self.register[reg_a] += self.register[reg_b]
         #elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
@@ -93,6 +93,19 @@ class CPU:
         self.ram[self.sp] = value
         self.pc += 2
 
+    def call(self):
+        #stores next address
+        self.sp -= 1
+        self.ram[self.sp] = self.pc + 2
+        #jumps to location in the given register.
+        self.pc = self.register[self.ram[self.pc + 1]]
+
+    def ret(self):
+        #jumps back to the address stored in the call function.
+        self.pc = self.ram[self.sp]
+        self.sp += 1
+
+
     def run(self):
         """Run the CPU."""
         while not self.halted:
@@ -122,6 +135,19 @@ class CPU:
             elif instruction == 0b01000110:
                 #POP
                 self.pop()
+
+            elif instruction == 0b01010000:
+                #CALL
+                self.call()
+
+            elif instruction == 0b00010001:
+                #RET
+                self.ret()
+
+            elif instruction == 0b10100000:
+                #ADD
+                self.alu("ADD", operand_a, operand_b)
+                self.pc += 3
 
             else:
                 pass
