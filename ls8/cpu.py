@@ -10,6 +10,7 @@ class CPU:
         self.register = register
         self.pc = pc
         self.halted = False
+        self.sp = 244 #memory - reserved, vectors and current key press
 
     def load(self):
         """Load a program into memory."""
@@ -78,6 +79,19 @@ class CPU:
     def multiply(self, op_a, op_b):
         self.register[op_a] *= self.register[op_b]
         self.pc += 3
+    
+    def pop(self):
+        address = self.ram[self.pc + 1]
+        self.register[address] = self.ram[self.sp]
+        self.sp += 1
+        self.pc += 2
+    
+    def push(self):
+        address = self.ram[self.pc + 1]
+        self.sp -= 1
+        value = self.register[address]
+        self.ram[self.sp] = value
+        self.pc += 2
 
     def run(self):
         """Run the CPU."""
@@ -85,7 +99,6 @@ class CPU:
             instruction = self.ram[self.pc]
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
-            #print(instruction)
             if instruction == 0b00000001:
                 #HLT
                 self.HLT()
@@ -101,6 +114,14 @@ class CPU:
             elif instruction == 0b10100010:
                 #MULTIPLY
                 self.multiply(operand_a, operand_b)
+            
+            elif instruction == 0b01000101:
+                #PUSH
+                self.push()
+            
+            elif instruction == 0b01000110:
+                #POP
+                self.pop()
 
             else:
                 pass
