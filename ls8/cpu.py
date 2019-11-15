@@ -11,6 +11,36 @@ class CPU:
         self.pc = pc
         self.halted = False
         self.sp = 244 #memory - reserved, vectors and current key press
+        self.flag = {'E':0, 'L': 0, 'G': 0}
+        #branchtable operations
+        OP1 = 0b00000001 #HLT
+        OP2 = 0b10000010 #LDI
+        OP3 = 0b01000111 #PRN
+        OP4 = 0b10100010 #MULTIPLY
+        OP5 = 0b01000101 #PUSH
+        OP6 = 0b01000110 #POP
+        OP7 = 0b01010000 #CALL
+        OP8 = 0b00010001 #RET
+        OP9 = 0b10100000 #ADD
+        OP10 = 0b10100111 #CMP
+        OP11 = 0b01010100 #JMP
+        OP12 = 0b01010101 #JEQ
+        OP13 = 0b01010110 #JNE
+
+        self.branchtable = {}
+        self.branchtable[OP1] = self.HLT
+        self.branchtable[OP2] = self.LDI
+        self.branchtable[OP3] = self.PRN
+        self.branchtable[OP4] = self.multiply
+        self.branchtable[OP5] = self.push
+        self.branchtable[OP6] = self.pop
+        self.branchtable[OP7] = self.call
+        self.branchtable[OP8] = self.ret
+        self.branchtable[OP9] = self.add
+        self.branchtable[OP10] = self.CMP
+        self.branchtable[OP11] = self.JMP
+        self.branchtable[OP12] = self.JEQ
+        self.branchtable[OP13] = self.JNE
 
     def load(self):
         """Load a program into memory."""
@@ -68,15 +98,20 @@ class CPU:
     def HLT(self):
         self.halted = True
     
-    def LDI(self, op_a, op_b):
+    def LDI(self):
+        op_a = self.ram_read(self.pc + 1)
+        op_b = self.ram_read(self.pc + 2)
         self.register[op_a] = op_b
         self.pc += 3
     
-    def PRN(self, op_a):
+    def PRN(self):
+        op_a = self.ram_read(self.pc + 1)
         print(self.register[op_a])
         self.pc += 2
     
-    def multiply(self, op_a, op_b):
+    def multiply(self):
+        op_a = self.ram_read(self.pc + 1)
+        op_b = self.ram_read(self.pc + 2)
         self.register[op_a] *= self.register[op_b]
         self.pc += 3
     
@@ -105,53 +140,54 @@ class CPU:
         self.pc = self.ram[self.sp]
         self.sp += 1
 
+    def add(self):
+        op_a = self.ram_read(self.pc + 1)
+        op_b = self.ram_read(self.pc + 2)
+        self.alu("ADD", op_a, op_b)
+        self.pc += 3
+
+    def CMP(self):
+        op_a = self.register[self.ram[self.pc + 1]]
+        op_b = self.register[self.ram[self.pc + 2]]
+
+        #reset flags to 0
+        #seems to work without this
+        #self.flag = self.flag.fromkeys(self.flag, 0)
+
+        #sets flag based on comparison of addresses.
+        if op_a == op_b:
+            self.flag['E'] = 1
+        if op_a < op_b:
+            self.flag['L'] = 1
+        if op_a > op_b:
+            self.flag['G'] = 1
+
+        self.pc += 3
+    
+    def JMP(self):
+        #jumps to the address stored in the register.
+        address = self.register[self.ram[self.pc + 1]]
+        self.pc = address
+
+    def JEQ(self):
+        #if the compared values are equal, jump to the stored address.
+        if self.flag['E'] == 1:
+            self.pc = self.register[self.ram[self.pc +1]]
+        else:
+            self.pc += 2
+    
+    def JNE(self):
+        #if the compared values are not equal, jump to the stored address.
+        if self.flag['E'] == 0:
+            self.pc = self.register[self.ram[self.pc + 1]]
+        else:
+            self.pc += 2
 
     def run(self):
         """Run the CPU."""
         while not self.halted:
             instruction = self.ram[self.pc]
-            operand_a = self.ram_read(self.pc + 1)
-            operand_b = self.ram_read(self.pc + 2)
-            if instruction == 0b00000001:
-                #HLT
-                self.HLT()
-            
-            elif instruction == 0b10000010:
-                #LDI
-                self.LDI(operand_a, operand_b)
-            
-            elif instruction == 0b01000111:
-                #PRN
-                self.PRN(operand_a)
-
-            elif instruction == 0b10100010:
-                #MULTIPLY
-                self.multiply(operand_a, operand_b)
-            
-            elif instruction == 0b01000101:
-                #PUSH
-                self.push()
-            
-            elif instruction == 0b01000110:
-                #POP
-                self.pop()
-
-            elif instruction == 0b01010000:
-                #CALL
-                self.call()
-
-            elif instruction == 0b00010001:
-                #RET
-                self.ret()
-
-            elif instruction == 0b10100000:
-                #ADD
-                self.alu("ADD", operand_a, operand_b)
-                self.pc += 3
-
-            else:
-                pass
-
+            self.branchtable[instruction]()
 
     def ram_read(self, MAR):
         #Takes in an address in memory and returns the value stored there.
