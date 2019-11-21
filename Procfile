@@ -1,1 +1,1 @@
-web: gunicorn app:ls8/ls8.py
+web: gunicorn ls8/ls8.py:app
