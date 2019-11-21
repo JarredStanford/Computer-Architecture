@@ -12,6 +12,7 @@ class CPU:
         self.halted = False
         self.sp = 244 #memory - reserved, vectors and current key press
         self.flag = {'E':0, 'L': 0, 'G': 0}
+        self.printouts = []
         #branchtable operations
         OP1 = 0b00000001 #HLT
         OP2 = 0b10000010 #LDI
@@ -44,29 +45,29 @@ class CPU:
         self.branchtable[OP13] = self.JNE
         self.branchtable[OP14] = self.PRA
 
-    def load(self):
+    def load(self, values):
         """Load a program into memory."""
 
         address = 0
 
         # For now, we've just hardcoded a program:
-        program = []
+        program = values
 
-        with open(sys.argv[1]) as f:
+        #with open(sys.argv[1]) as f:
 
-            for line in f:
-                line = line.split("#")[0]
-                line = line.strip()
+        #    for line in f:
+        #        line = line.split("#")[0]
+        #        line = line.strip()
 
-                if line == '':
-                    continue
+        #        if line == '':
+        #            continue
 
-                program.append(int(line, 2))
+        #        program.append(int(line, 2))
 
-            print(program)
-            for instruction in program:
-                self.ram[address] = instruction
-                address += 1
+        print(program)
+        for instruction in program:
+            self.ram[address] = instruction
+            address += 1
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -109,6 +110,7 @@ class CPU:
     def PRN(self):
         op_a = self.ram_read(self.pc + 1)
         print(self.register[op_a])
+        self.printouts.append(self.register[op_a])
         self.pc += 2
     
     def multiply(self):
@@ -195,6 +197,7 @@ class CPU:
         while not self.halted:
             instruction = self.ram[self.pc]
             self.branchtable[instruction]()
+        return self.printouts
 
     def ram_read(self, MAR):
         #Takes in an address in memory and returns the value stored there.
