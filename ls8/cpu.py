@@ -26,6 +26,7 @@ class CPU:
         OP11 = 0b01010100 #JMP
         OP12 = 0b01010101 #JEQ
         OP13 = 0b01010110 #JNE
+        OP14 = 0b01001000 #PRA
 
         self.branchtable = {}
         self.branchtable[OP1] = self.HLT
@@ -41,6 +42,7 @@ class CPU:
         self.branchtable[OP11] = self.JMP
         self.branchtable[OP12] = self.JEQ
         self.branchtable[OP13] = self.JNE
+        self.branchtable[OP14] = self.PRA
 
     def load(self):
         """Load a program into memory."""
@@ -182,6 +184,11 @@ class CPU:
             self.pc = self.register[self.ram[self.pc + 1]]
         else:
             self.pc += 2
+        
+    def PRA(self):
+        op_a = self.ram_read(self.pc + 1)
+        print(str(chr(self.register[op_a])))
+        self.pc += 2
 
     def run(self):
         """Run the CPU."""
