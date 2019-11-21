@@ -1,0 +1,1 @@
+web: gunicorn app:ls8/ls8.py
