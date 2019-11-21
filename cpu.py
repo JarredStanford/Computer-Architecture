@@ -28,6 +28,9 @@ class CPU:
         OP12 = 0b01010101 #JEQ
         OP13 = 0b01010110 #JNE
         OP14 = 0b01001000 #PRA
+        OP15 = 0b10101000 #_and
+        OP16 = 0b10101010 #_or
+        OP17 = 0b10101011 #_xor
 
         self.branchtable = {}
         self.branchtable[OP1] = self.HLT
@@ -44,6 +47,9 @@ class CPU:
         self.branchtable[OP12] = self.JEQ
         self.branchtable[OP13] = self.JNE
         self.branchtable[OP14] = self.PRA
+        self.branchtable[OP15] = self._and
+        self.branchtable[OP16] = self._or
+        self.branchtable[OP17] = self._xor
 
     def load(self, values):
         """Load a program into memory."""
@@ -55,7 +61,7 @@ class CPU:
 
         #with open(sys.argv[1]) as f:
 
-        #    for line in f:
+        #   for line in f:
         #        line = line.split("#")[0]
         #        line = line.strip()
 
@@ -189,7 +195,7 @@ class CPU:
         
     def PRA(self):
         op_a = self.ram_read(self.pc + 1)
-        print(str(chr(self.register[op_a])))
+        self.printouts.append(str(chr(self.register[op_a])))
         self.pc += 2
 
     def run(self):
@@ -207,3 +213,22 @@ class CPU:
     def ram_write(self, MAR, MDR):
         #Accepts an address and value. Writes the value to the given address in memory.
         self.ram[MAR] = MDR
+    
+    def _and(self):
+        op_a = self.ram_read(self.pc+1)
+        op_b = self.ram_read(self.pc+2)
+
+        self.register[op_a] = self.register[op_a] & self.register[op_b]
+        self.pc += 3
+
+    def _or(self):
+        op_a = self.ram_read(self.pc+1)
+        op_b = self.ram_read(self.pc+2)
+        self.register[op_a] = self.register[op_a] | self.register[op_b]
+        self.pc += 3
+
+    def _xor(self):
+        op_a = self.ram_read(self.pc+1)
+        op_b = self.ram_read(self.pc+2)
+        self.register[op_a] = self.register[op_a] ^ self.register[op_b]
+        self.pc += 3

@@ -23,8 +23,8 @@ def binary():
 
     cpu.load(values['binary'])
     cpu.run()
-
-    printouts = cpu.printouts
+    p = ''
+    printouts = int(p.join(cpu.printouts[-3:]))
         
     response = {
         'message': printouts
